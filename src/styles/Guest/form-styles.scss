@@ -1,0 +1,43 @@
+.input-auth {
+  display: block !important;
+  height: 47px;
+  margin-bottom: 22px !important;
+
+  .ant-input {
+    box-shadow: none;
+    line-height: 36px;
+    background: rgba(0, 0, 0, .1);
+    border: 1px solid hsla(0, 0%, 100%, .1);
+    border-radius: 5px;
+    color: #fff;
+    padding-left: 35px !important;
+  }
+
+  .ant-input:hover {
+    border-color: hsla(0, 0%, 100%, .1) !important;
+  }
+
+  .ant-input:focus {
+    outline: none !important;
+    border-color: hsla(0, 0%, 100%, .1);
+    box-shadow: none;
+  }
+}
+
+.other-from-links {
+  display: flex;
+  margin-bottom: 12px;
+  justify-content: space-between;
+
+  a:hover {
+    text-decoration: underline;
+  }
+}
+
+.other-from-links-right-position {
+  flex-direction: row-reverse;
+}
+
+.submit-form {
+  margin-bottom: 12px;
+}
