@@ -27,7 +27,7 @@
       margin: 0 auto;
 
       .auth-form-title {
-        font-family: 'Source Sans Pro', sans-serif;
+        font-family: 'Noto Sans', sans-serif;
         font-size: 32px;
         line-height: 1.5em;
         color: #eee;
