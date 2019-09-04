@@ -5,7 +5,7 @@
       <DefaultBlock>
         <div slot="content" class="domain-statistics">
           <div class="block-title">
-            {{domain}}
+            <router-link :to="`domain/` + domain">{{domain}}</router-link>
           </div>
           <a-tabs defaultActiveKey="1">
             <a-tab-pane tab="mobile" key="1">
@@ -22,6 +22,7 @@
 </template>
 
 <script>
+	import date from 'date-and-time';
 	import DefaultBlock from '@/components/User/Block';
 	import DomainChart from '@/components/Chart/MainPageDomainStatistics'
 
@@ -37,19 +38,18 @@
 			}
 		},
 		async beforeMount() {
+			//get_performance_data_by_url_name_and_date
+
 			await this.$http.get('/test/get_statistics_for_main_page', {
 				params: {
 					token: this.$store.getters.userData.token
 				}
 			})
 			.then((res) => {
-				const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 				for (let i in res.data) {
 					for (let k in res.data[i]) {
 						res.data[i][k].forEach(item => {
-							const date = new Date(item['date']);
-							item['date'] = `${date.getDate()} ${months[date.getMonth()]  }`
+							item['date'] = date.format(new Date(item['date']), 'DD MMM');
 						});
 					}
 				}
@@ -75,6 +75,7 @@
 
     .block-title {
       position: absolute;
+      z-index: 1;
       color: #48465b;
       padding: 13px 15px 0;
       font: 16px/1.2em 'Open Sans', sans-serif;

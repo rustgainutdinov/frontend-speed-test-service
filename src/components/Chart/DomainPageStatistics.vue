@@ -1,10 +1,10 @@
 <template>
   <div class="chart">
-    <v-chart :forceFit="true" :height="height" :data="data" :scale="scale" :padding="padding">
+    <v-chart :forceFit="true" :height="height" :data="chartData" :scale="scale" :padding="padding">
       <v-tooltip/>
       <v-axis/>
-      <v-smooth-line position="year*value" :size="2" color="page"/>
-      <v-point position="year*value" color="page" :size="4" :v-style="style" :shape="'circle'"/>
+      <v-smooth-line position="date*performance" :size="2" color="url"/>
+      <v-point position="date*performance" color="url" :size="4" :v-style="style" :shape="'circle'"/>
       <v-legend/>
       <!--<v-area position="year*value" color="page"/>-->
     </v-chart>
@@ -14,25 +14,10 @@
 <script>
 	const padding = [50, 50, 80];
 
-	let data = [];
-
-	const count = 7;
-
-	for (let i = 0; i < count * 3; i++) {
-		data.push({
-			page: Math.floor(i / count).toString(),
-			year: (i % count).toString() + ' Марта',
-			value: 50 + Math.round(Math.random() * 20)
-		});
-	}
-
 	const scale = [{
-		dataKey: 'value',
-		min: 40,
+		dataKey: 'date'
 	}, {
-		dataKey: 'year',
-		min: 0,
-		max: 1,
+		dataKey: 'performance',
 	}];
 	export default {
 		name: "DomainPageStatistics",
@@ -41,10 +26,30 @@
 				scale,
 				height: 500,
 				padding,
-				data,
+				data: [],
 				style: {stroke: '#fff', lineWidth: 1}
 			}
-		}
+		},
+		methods: {
+			changeData() {
+				const count = 7;
+				this.data = [];
+				for (let i = 0; i < count * 3; i++) {
+					this.data.push({
+						page: Math.floor(i / count).toString(),
+						year: (i % count).toString() + ' Марта',
+						value: 50 + Math.round(Math.random() * 20)
+					});
+				}
+			}
+		},
+		beforeMount() {
+			this.changeData();
+			setInterval(() => {
+				this.changeData();
+			}, 1000);
+		},
+		props: ['chartData']
 	}
 </script>
 

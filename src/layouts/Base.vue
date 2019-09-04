@@ -46,12 +46,12 @@
       </div>
       <div class="subheader">
         <a-breadcrumb>
-          <a-breadcrumb-item href="">
-            <a-icon type="home"/>
-            <span> Главная</span>
-          </a-breadcrumb-item>
-          <a-breadcrumb-item>
-            ispring.ru
+          <!--<a-breadcrumb-item href="">-->
+          <!--<a-icon type="home"/>-->
+          <!--<span> Главная</span>-->
+          <!--</a-breadcrumb-item>-->
+          <a-breadcrumb-item v-for="breadcrumb in breadcrumbs">
+            <router-link :to="breadcrumb.path">{{breadcrumb.name}}</router-link>
           </a-breadcrumb-item>
         </a-breadcrumb>
       </div>
@@ -66,7 +66,8 @@
 		name: "Base",
 		data() {
 			return {
-				isSelectActive: false
+				isSelectActive: false,
+				breadcrumbs: []
 			}
 		},
 		methods: {
@@ -78,6 +79,32 @@
 			},
 			filterOption(input, option) {
 				return option.componentOptions.children[0].text.toLowerCase().indexOf(input.toLowerCase()) >= 0
+			},
+			changeBreadCrumbsList() {
+				this.breadcrumbs = [];
+				this.$breadcrumbs.forEach(item => {
+					let breadcrumb = {
+						path: null,
+						name: null
+					};
+
+					if (typeof item.meta.breadcrumb === 'function') {
+						breadcrumb = item.meta.breadcrumb(this.$route, item);
+					} else {
+						breadcrumb.path = item.path;
+						breadcrumb.name = item.meta.breadcrumb;
+					}
+
+					this.breadcrumbs.push(breadcrumb);
+				});
+			}
+		},
+		beforeMount() {
+			this.changeBreadCrumbsList()
+		},
+		watch: {
+			$route() {
+				this.changeBreadCrumbsList()
 			}
 		}
 	}

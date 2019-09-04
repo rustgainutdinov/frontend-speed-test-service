@@ -3,8 +3,9 @@
     <v-chart :forceFit="true" :height="height" :data="data" :scale="scale" :padding="padding">
       <v-tooltip/>
       <v-axis/>
-      <v-smooth-line position="date*score" :size="2" color="domain"/>
-      <v-point position="date*score" color="domain" :size="4" :v-style="style" :shape="'circle'"/>
+      <v-smooth-line position="date*score" :size="2" color="url"/>
+      <v-point position="date*score" color="url" :size="4" :v-style="style" :shape="'circle'"/>
+      <!--<v-area position="year*value" color="page"/>-->
     </v-chart>
   </div>
 </template>
@@ -15,6 +16,8 @@
 
 	const scale = [{
 		dataKey: 'score',
+    min: 0,
+    max: 1
 	}, {
 		dataKey: 'date',
 	}];

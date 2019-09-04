@@ -1,37 +1,42 @@
 <template>
   <a-row :gutter="20">
-    <a-col :span="14">
+    <a-col :span="24">
       <DefaultBlock>
         <div slot="content" class="domain-page-domain-statistics">
           <div class="block-title">
             <div class="title">ispring.ru</div>
-            <a-range-picker class="date-picker"/>
+            <a-range-picker class="date-picker"
+                            :format="dateFormat"
+                            :defaultValue="[moment(getLastWeekDay, dateFormat), moment(getToday, dateFormat)]"
+                            @change="onDateChange"/>
           </div>
           <a-tabs defaultActiveKey="1">
             <a-tab-pane tab="mobile" key="1">
-              <DomainChart/>
+              <DomainChart :chartData="mobileChartData"/>
             </a-tab-pane>
             <a-tab-pane tab="desktop" key="2" forceRender>
-              <DomainChart/>
+              <DomainChart :chartData="desktopChartData"/>
             </a-tab-pane>
           </a-tabs>
         </div>
       </DefaultBlock>
     </a-col>
-    <a-col :span="10">
+    <a-col :span="24">
       <DefaultBlock title>
         <div slot="title">
           <div class="title">Список url-ов</div>
         </div>
         <div slot="content" class="urls-list">
-          <a-table :columns="columns" :dataSource="data" size="middle" :pagination="false" :rowSelection="rowSelection">
+          <a-table :columns="columns" :dataSource="urlsListData" size="middle" :pagination="false"
+                   :rowSelection="{onChange: onTableChange}"
+                   rowKey="url">
             <span slot="url" slot-scope="text, record">{{text}} <a-icon type="link"/></span>
-            <div slot="mobile-score" slot-scope="text, record" class="urls-table-chart">
-              <a-progress type="circle" :percent="text.value" :strokeColor="text.color" :width="50"/>
+            <div slot="mobile_performance" slot-scope="text, record" class="urls-table-chart">
+              <a-progress type="circle" :percent="text.value * 100" :strokeColor="text.color" :width="50"/>
             </div>
 
-            <div slot="desktop-score" slot-scope="text, record" class="urls-table-chart">
-              <a-progress type="circle" :percent="text.value" :strokeColor="text.color" :width="50"/>
+            <div slot="desktop_performance" slot-scope="text, record" class="urls-table-chart">
+              <a-progress type="circle" :percent="text.value * 100" :strokeColor="text.color" :width="50"/>
             </div>
           </a-table>
         </div>
@@ -41,6 +46,8 @@
 </template>
 
 <script>
+	import date from 'date-and-time';
+	import moment from 'moment';
 	import DefaultBlock from '@/components/User/Block';
 	import DomainChart from '@/components/Chart/DomainPageStatistics';
 
@@ -51,70 +58,17 @@
 		scopedSlots: {customRender: 'url'},
 	}, {
 		title: 'Mobile score',
-		dataIndex: 'mobile-score',
-		scopedSlots: {customRender: 'mobile-score'},
+		dataIndex: 'mobile_performance',
+		scopedSlots: {customRender: 'mobile_performance'},
 		width: '33%',
 		align: 'center'
 	}, {
 		title: 'Desktop score',
-		dataIndex: 'desktop-score',
-		scopedSlots: {customRender: 'desktop-score'},
+		dataIndex: 'desktop_performance',
+		scopedSlots: {customRender: 'desktop_performance'},
 		width: '33%',
 		align: 'center'
 	}];
-
-	const data = [{
-		key: '1',
-		url: 'ispring.ru',
-		'desktop-score': {
-			value: 95,
-			color: '#0abb87'
-		},
-		'mobile-score': {
-			value: 51,
-			color: '#ffb822'
-		},
-		actions: {
-			favourite: true
-		},
-	}, {
-		key: '2',
-		url: 'travelline.ru',
-		'desktop-score': {
-			value: 81,
-			color: ''
-		},
-		'mobile-score': {
-			value: 45,
-			color: '#f5222d'
-		},
-		actions: {
-			favourite: false
-		},
-	}, {
-		key: '3',
-		url: 'moneta.ru',
-		'desktop-score': {
-			value: 73,
-			color: ''
-		},
-		'mobile-score': {
-			value: 82,
-			color: '#0abb87'
-		},
-		actions: {
-			favourite: true
-		},
-	}];
-
-	const rowSelection = {
-		onChange: (selectedRowKeys, selectedRows) => {
-		},
-		onSelect: (record, selected, selectedRows) => {
-		},
-		onSelectAll: (selected, selectedRows, changeRows) => {
-		},
-	};
 
 	export default {
 		name: "Domain",
@@ -125,11 +79,91 @@
 		data() {
 			return {
 				columns,
-				data,
-				rowSelection
+				urlsListData: [],
+				dateFormat: 'YYYY-MM-DD',
+				selectedUrls: [],
+				selectedStartDate: null,
+				selectedEndDate: null,
+				mobileChartData: [],
+				desktopChartData: []
 			}
 		},
-		methods: {}
+		methods: {
+			moment,
+			getColorByPerformanceForTable(performance) {
+				if (performance >= .75) return '#0abb87';
+				else if (performance >= .5) return '#ffb822';
+				else if (performance > 0) return '#f5222d';
+			},
+			onTableChange(selectedRowKeys, selectedRows) {
+				this.selectedUrls = [];
+				selectedRows.forEach(item => {
+					this.selectedUrls.push(item.url);
+				});
+				this.getDataForChart();
+			},
+			onDateChange(date, dateString) {
+				console.log(dateString);
+				this.selectedStartDate = dateString[0];
+				this.selectedEndDate = dateString[1];
+				this.getDataForChart();
+			},
+			getUrlsList() {
+				this.$http.get('/test/get_urls_list_by_domain', {
+					params: {
+						token: this.$store.getters.userData.token,
+						domainName: this.domainName
+					}
+				})
+				.then((res) => {
+					for (let key in res.data) {
+						res.data[key]['mobile_performance'] = {
+							value: res.data[key]['mobile_performance'],
+							color: this.getColorByPerformanceForTable(res.data[key][['mobile_performance']])
+						};
+
+						res.data[key]['desktop_performance'] = {
+							value: res.data[key]['desktop_performance'],
+							color: this.getColorByPerformanceForTable(res.data[key][['desktop_performance']])
+						};
+					}
+					this.urlsListData = res.data;
+				});
+			},
+			getDataForChart() {
+				this.$http.get('/test/get_performance_data_by_url_name_and_date', {
+					params: {
+						token: this.$store.getters.userData.token,
+						startDate: this.selectedStartDate,
+						endDate: date.format(date.addDays(new Date(this.selectedEndDate), 1), this.dateFormat),
+						urls: this.selectedUrls.toString(),
+					}
+				})
+				.then((res) => {
+					for (let k in res.data) {
+						res.data[k].forEach(item => {
+							item['date'] = date.format(new Date(item['date']), 'DD MMM');
+						});
+					}
+					this.mobileChartData = res.data.mobile;
+					this.desktopChartData = res.data.desktop;
+				});
+			}
+		},
+		props: ['domainName'],
+		computed: {
+			getToday() {
+				return date.format(new Date(), this.dateFormat);
+			},
+			getLastWeekDay() {
+				return date.format(date.addDays(new Date(), -7), this.dateFormat);
+			},
+		},
+		beforeMount() {
+			this.selectedStartDate = this.getLastWeekDay;
+			this.selectedEndDate = this.getToday;
+			this.getUrlsList();
+		}
 	}
 </script>
 
