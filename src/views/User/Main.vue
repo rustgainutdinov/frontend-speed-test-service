@@ -5,7 +5,7 @@
       <DefaultBlock>
         <div slot="content" class="domain-statistics">
           <div class="block-title">
-            <router-link :to="`domain/` + domain">{{domain}}</router-link>
+            <router-link :to="domain">{{domain}}</router-link>
           </div>
           <a-tabs defaultActiveKey="1">
             <a-tab-pane tab="mobile" key="1">
@@ -53,6 +53,7 @@
 						});
 					}
 				}
+				console.log(res.data);
 				this.statisticsData = res.data;
 			})
 			.catch((error) => {
