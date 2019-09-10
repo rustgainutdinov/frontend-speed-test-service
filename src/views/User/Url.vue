@@ -37,7 +37,7 @@
                                         :defaultValue="[moment(getLastWeekDay, dateFormat), moment(getToday, dateFormat)]"
                                         @change="onIndicatorsChartDateChange"/>
                     </div>
-                    <a-select mode="multiple" :defaultValue="['performance']"
+                    <a-select mode="multiple" :defaultValue="defaultSelectedIndicators"
                               @change="handleIndicatorsListChange"
                               placeholder="Please select" class="indicators-list">
                         <a-select-option v-for="item in filteredIndicators" :key="item">
@@ -48,9 +48,10 @@
                 <div slot="content">
                     <a-tabs defaultActiveKey="1">
                         <a-tab-pane tab="mobile" key="1">
-                            <IndicatorsChart/>
+                            <IndicatorsChart :data="indicatorsChartData.mobile"/>
                         </a-tab-pane>
                         <a-tab-pane tab="desktop" key="2" forceRender>
+                          <IndicatorsChart :data="indicatorsChartData.desktop"/>
                         </a-tab-pane>
                     </a-tabs>
                 </div>
@@ -67,6 +68,8 @@
     import FallenIndicators from '@/components/Chart/UrlPageFallenIndicators';
     import IndicatorsChart from '@/components/Chart/UrlPageIndicatorsStatistics';
     import auditsIndicators from "../../config/auditsIndicators";
+
+    const defaultSelectedIndicators = ['performance'];
 
     export default {
         name: "Url",
@@ -87,13 +90,16 @@
                 indicatorsChartSelectedStartDate: null,
                 indicatorsChartSelectedEndDate: null,
                 auditsIndicators,
-                selectedAuditIndicators: []
+                defaultSelectedIndicators,
+                selectedAuditIndicators: defaultSelectedIndicators,
+                indicatorsChartData: {}
             }
         },
         methods: {
             moment,
             handleIndicatorsListChange(selectedItems) {
                 this.selectedAuditIndicators = selectedItems;
+                this.getDataForSelectedIndicatorsChart();
             },
             onDateChange(date, dateString) {
                 this.selectedStartDate = dateString[0];
@@ -103,6 +109,7 @@
             onIndicatorsChartDateChange(date, dateString) {
                 this.indicatorsChartSelectedStartDate = dateString[0];
                 this.indicatorsChartSelectedEndDate = dateString[1];
+                this.getDataForSelectedIndicatorsChart();
             },
             getMainChartData() {
                 this.$http.get('/test/get_all_indicators_by_url_name', {
@@ -141,6 +148,32 @@
                             // console.log(error);
                         }
                     })
+            },
+            getDataForSelectedIndicatorsChart() {
+                this.$http.get('/test/get_selected_indicators_by_url_and_date', {
+                    params: {
+                        token: this.$store.getters.userData.token,
+                        url: this.urlName,
+                        startDate: this.indicatorsChartSelectedStartDate,
+                        endDate: date.format(date.addDays(new Date(this.indicatorsChartSelectedEndDate), 1), this.dateFormat),
+                        indicators: this.selectedAuditIndicators.toString(),
+                    }
+                })
+                    .then((res) => {
+                        for (let k in res.data) {
+                            res.data[k].forEach(item => {
+                                item['date'] = date.format(new Date(item['date']), 'DD MMM');
+                            });
+                        }
+                        this.indicatorsChartData = res.data;
+                    })
+                    .catch((error) => {
+                        if (error.response) {
+                            this.$message.error(error.response.data, 10);
+                        } else {
+                            // console.log(error);
+                        }
+                    })
             }
         },
         computed: {
@@ -155,10 +188,11 @@
             }
         },
         beforeMount() {
-            this.selectedStartDate = this.getLastWeekDay;
-            this.selectedEndDate = this.getToday;
+            this.selectedStartDate = this.indicatorsChartSelectedStartDate = this.getLastWeekDay;
+            this.selectedEndDate = this.indicatorsChartSelectedEndDate = this.getToday;
             this.getMainChartData();
             this.getDataForFallenIndicatorsChart();
+            this.getDataForSelectedIndicatorsChart();
         },
     }
 </script>

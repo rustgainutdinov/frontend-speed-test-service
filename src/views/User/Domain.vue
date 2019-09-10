@@ -4,7 +4,7 @@
             <DefaultBlock>
                 <div slot="content" class="domain-page-domain-statistics">
                     <div class="block-title">
-                        <div class="title">ispring.ru</div>
+                        <div class="title">{{domainName}}</div>
                         <a-range-picker class="date-picker"
                                         :format="dateFormat"
                                         :defaultValue="[moment(getLastWeekDay, dateFormat), moment(getToday, dateFormat)]"
