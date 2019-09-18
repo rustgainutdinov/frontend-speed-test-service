@@ -9,8 +9,8 @@ import Main from '@/views/User/Main'
 import Domain from '@/views/User/Domain'
 import DomainUrlInfoTemplate from '@/views/User/DomainUrlInfoTemplate'
 import Url from '@/views/User/Url'
-import Cookie from 'js-cookie';
-import store from '@/store'
+import AdminPanel from '@/views/Admin/DomainsListPage'
+import getPriority from "../middleware/getPriority";
 
 Vue.use(Router);
 
@@ -47,6 +47,22 @@ export default new Router({
                     component: Main,
                     meta: {
                         breadcrumb: 'Основная статистика'
+                    }
+                },
+                {
+                    path: 'admin-panel',
+                    name: 'Admin panel',
+                    component: AdminPanel,
+                    meta: {
+                        breadcrumb: 'Администрирование доменов'
+                    },
+                    beforeEnter(to, from, next) {
+                        let priority = getPriority();
+                        if (priority && priority >= 200) {
+                            next();
+                        } else {
+                            next({path: '/user'});
+                        }
                     }
                 },
                 {
@@ -94,28 +110,22 @@ export default new Router({
                         },
                     ]
                 },
-                {
-                    path: 'url',
-                    name: 'Url',
-                    component:
-                    Url,
-                    meta: {
-                        breadcrumb: 'Главная'
-                    }
-                }
+                // {
+                //     path: 'url',
+                //     name: 'Url',
+                //     component: Url,
+                //     meta: {
+                //         breadcrumb: 'Главная'
+                //     }
+                // },
             ],
-            async beforeEnter(to, from, next) {
-                let priority = null;
-                if (store.getters.userData.priority) {
-                    priority = store.getters.userData.priority;
-                } else if (Cookie.get('priority')) {
-                    priority = Cookie.get('priority');
-                    store.dispatch('setUserData', {priority, token: Cookie.get('token')})
-                }
-
+            beforeEnter(to, from, next) {
+                let priority = getPriority();
                 if (priority && priority >= 100) {
                     next();
-                } else next({path: '/guest'});
+                } else {
+                    next({path: '/guest'});
+                }
             }
         },
         {
@@ -144,8 +154,7 @@ export default new Router({
                         component: Register
                     }
                 ]
-        }
-        ,
+        },
         {
             path: '*',
             name:

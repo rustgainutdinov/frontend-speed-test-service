@@ -3,8 +3,8 @@
         <v-chart :forceFit="true" :height="height" :data="data" :scale="scale" :padding="padding">
             <v-tooltip/>
             <v-axis/>
-            <v-smooth-line position="date*value" :size="2" color="name"/>
-            <v-point position="date*value" color="name" :size="4" :v-style="style" :shape="'circle'"/>
+            <v-smooth-line position="date*value" :size="lineSize" color="name"/>
+            <v-point position="date*value" color="name" :size="pointSize" :v-style="style" :shape="'circle'"/>
             <v-legend/>
             <!--<v-area position="year*value" color="page"/>-->
         </v-chart>
@@ -15,7 +15,9 @@
     const padding = [50, 50, 150];
 
     const scale = [{
-        dataKey: 'value'
+        dataKey: 'value',
+        min: 0,
+        max: 1
     }, {
         dataKey: 'date'
     }];
@@ -26,13 +28,22 @@
                 scale,
                 height: 500,
                 padding,
-                style: {stroke: '#fff', lineWidth: 1}
+                style: {stroke: '#fff', lineWidth: 1},
+                lineSize: ['name', function (name) {
+                    if (name === 'performance') {
+                        return 5;
+                    }
+                    return 2;
+                }],
+                pointSize: ['name', function (name) {
+                    if (name === 'performance') {
+                        return 6;
+                    }
+                    return 4;
+                }]
             }
         },
-        props: ['data'],
-        beforeMount() {
-            console.log(this.data);
-        }
+        props: ['data']
     }
 </script>
 

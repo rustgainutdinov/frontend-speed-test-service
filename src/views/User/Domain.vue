@@ -9,6 +9,9 @@
                                         :format="dateFormat"
                                         :defaultValue="[moment(getLastWeekDay, dateFormat), moment(getToday, dateFormat)]"
                                         @change="onDateChange"/>
+                        <a-checkbox @change="onUserSubscribedToDomainChanged" class="domain-subscribed-checkbox"
+                                    :checked="userSubscribedToDomain"> Подписка на домен
+                        </a-checkbox>
                     </div>
                     <a-tabs defaultActiveKey="1">
                         <a-tab-pane tab="mobile" key="1">
@@ -35,13 +38,13 @@
                                   :to="{ path: `${domainName}/url-info`, query: {url: text}}">{{text}} </router-link>
                           <a :href="'http://' + text" target="_blank"><a-icon type="link"/></a>
                         </span>
-                        <div slot="mobile_performance" slot-scope="text, record" class="urls-table-chart">
-                            <a-progress type="circle" :percent="text.value * 100" :strokeColor="text.color"
+                        <div slot="mobile_performance" slot-scope="text" class="urls-table-chart">
+                            <a-progress type="circle" :percent="Math.round(text.value * 100)" :strokeColor="text.color"
                                         :width="50"/>
                         </div>
 
-                        <div slot="desktop_performance" slot-scope="text, record" class="urls-table-chart">
-                            <a-progress type="circle" :percent="text.value * 100" :strokeColor="text.color"
+                        <div slot="desktop_performance" slot-scope="text" class="urls-table-chart">
+                            <a-progress type="circle" :percent="Math.round(text.value * 100)" :strokeColor="text.color"
                                         :width="50"/>
                         </div>
                     </a-table>
@@ -91,7 +94,8 @@
                 selectedStartDate: null,
                 selectedEndDate: null,
                 mobileChartData: [],
-                desktopChartData: []
+                desktopChartData: [],
+                userSubscribedToDomain: false
             }
         },
         methods: {
@@ -152,6 +156,46 @@
                     this.mobileChartData = res.data.mobile;
                     this.desktopChartData = res.data.desktop;
                 });
+            },
+            onUserSubscribedToDomainChanged(e) {
+                let route = '';
+                if (e.target.checked) {
+                    route = 'subscribe_to_domain';
+                } else {
+                    route = 'unsubscribe_to_domain';
+                }
+                this.$http.post('/user/' + route, undefined, {
+                    params: {
+                        token: this.$store.getters.userData.token,
+                        domain: this.domainName,
+                    }
+                })
+                    .then(() => {
+                        this.getUserSubscribedInfo();
+                        this.$message.success('Изменения успешно сохранены', 5);
+                    })
+                    .catch((error) => {
+                        this.$message.error('Изменения не сохранены', 5);
+                        if (error.response) {
+                            this.$message.error(error.response.data, 5);
+                        } else {
+                            // console.log(error);
+                        }
+                    })
+            },
+            getUserSubscribedInfo() {
+                this.$http.get('/user/get_subscribed_domains', {
+                    params: {
+                        token: this.$store.getters.userData.token
+                    }
+                }).then((res) => {
+                    this.userSubscribedToDomain = false;
+                    res.data.forEach(domainItem => {
+                        if (domainItem.name === this.domainName) {
+                            this.userSubscribedToDomain = true;
+                        }
+                    })
+                });
             }
         },
         computed: {
@@ -169,13 +213,13 @@
             this.selectedStartDate = this.getLastWeekDay;
             this.selectedEndDate = this.getToday;
             this.getUrlsList();
+            this.getUserSubscribedInfo();
         }
     }
 </script>
 
 <style lang="scss">
     .domain-page-domain-statistics {
-
         .block-title {
             position: absolute;
             z-index: 1;
@@ -212,6 +256,12 @@
                 .ant-select-focused .ant-select-selection, .ant-select-selection:focus, .ant-select-selection:active {
                     box-shadow: none;
                 }
+            }
+
+            .domain-subscribed-checkbox {
+                font: 14px/30px 'Open Sans', sans-serif;
+                color: #48465b;
+                margin-left: 30px;
             }
         }
 

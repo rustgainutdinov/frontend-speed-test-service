@@ -13,16 +13,6 @@
 
 	let data = [];
 
-	const count = 7;
-
-	// for (let i = 0; i < count * 3; i++) {
-	// 	data.push({
-	// 		page: Math.floor(i / count).toString(),
-	// 		year: (i % count).toString() + ' Марта',
-	// 		value: 50 + Math.round(Math.random() * 20)
-	// 	});
-	// }
-
 	const scale = [{
 		dataKey: 'score',
 		min: 40,

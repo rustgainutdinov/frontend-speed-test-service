@@ -1,32 +1,6 @@
 <template>
     <a-row :gutter="20">
         <a-col :span="24">
-            <DefaultBlock borderedTitle class="main-url-indicators-chart">
-                <div slot="title">
-                    <div class="title">Статистика показателей <a :href="'http://' + urlName"
-                                                                 target="_blank">{{urlName}}</a></div>
-                </div>
-                <div slot="content">
-                    <UrlChart :data="mainChartData"/>
-                </div>
-            </DefaultBlock>
-        </a-col>
-        <a-col :span="11">
-            <DefaultBlock borderedTitle class="fallen-indicators-chart">
-                <div slot="title" class="title-block">
-                    <div class="title">Упавшие показатели</div>
-                    <div class="space"></div>
-                    <a-range-picker class="date-picker"
-                                    :format="dateFormat"
-                                    :defaultValue="[moment(getLastWeekDay, dateFormat), moment(getToday, dateFormat)]"
-                                    @change="onDateChange"/>
-                </div>
-                <div slot="content">
-                    <FallenIndicators :data="fallenIndicatorsData"/>
-                </div>
-            </DefaultBlock>
-        </a-col>
-        <a-col :span="13">
             <DefaultBlock title class="indicators-statistics-chart">
                 <div slot="title">
                     <div class="text-block">
@@ -37,7 +11,7 @@
                                         :defaultValue="[moment(getLastWeekDay, dateFormat), moment(getToday, dateFormat)]"
                                         @change="onIndicatorsChartDateChange"/>
                     </div>
-                    <a-select mode="multiple" :defaultValue="defaultSelectedIndicators"
+                    <a-select mode="multiple"
                               @change="handleIndicatorsListChange"
                               placeholder="Please select" class="indicators-list">
                         <a-select-option v-for="item in filteredIndicators" :key="item">
@@ -51,7 +25,28 @@
                             <IndicatorsChart :data="indicatorsChartData.mobile"/>
                         </a-tab-pane>
                         <a-tab-pane tab="desktop" key="2" forceRender>
-                          <IndicatorsChart :data="indicatorsChartData.desktop"/>
+                            <IndicatorsChart :data="indicatorsChartData.desktop"/>
+                        </a-tab-pane>
+                    </a-tabs>
+                </div>
+            </DefaultBlock>
+        </a-col>
+        <a-col :span="24">
+            <DefaultBlock title class="fallen-indicators-chart">
+                <div slot="title" class="title-block">
+                    <div class="title">Упавшие показатели</div>
+                    <a-range-picker class="date-picker"
+                                    :format="dateFormat"
+                                    :defaultValue="[moment(getLastWeekDay, dateFormat), moment(getToday, dateFormat)]"
+                                    @change="onDateChange"/>
+                </div>
+                <div slot="content">
+                    <a-tabs defaultActiveKey="1">
+                        <a-tab-pane tab="mobile" key="1">
+                            <FallenIndicatorsTable :data="fallenIndicatorsData.mobile"/>
+                        </a-tab-pane>
+                        <a-tab-pane tab="desktop" key="2" forceRender>
+                            <FallenIndicatorsTable :data="fallenIndicatorsData.desktop"/>
                         </a-tab-pane>
                     </a-tabs>
                 </div>
@@ -64,25 +59,21 @@
     import date from 'date-and-time';
     import moment from 'moment';
     import DefaultBlock from '@/components/User/Block';
-    import UrlChart from '@/components/Chart/UrlPageUrlStatistics';
-    import FallenIndicators from '@/components/Chart/UrlPageFallenIndicators';
+    import FallenIndicatorsTable from '@/components/Chart/UrlPageFallenIndicatorsTable';
     import IndicatorsChart from '@/components/Chart/UrlPageIndicatorsStatistics';
     import auditsIndicators from "../../config/auditsIndicators";
 
-    const defaultSelectedIndicators = ['performance'];
 
     export default {
         name: "Url",
         components: {
-            UrlChart,
             DefaultBlock,
-            FallenIndicators,
+            FallenIndicatorsTable,
             IndicatorsChart
         },
         data() {
             return {
                 urlName: this.$route.query.url,
-                mainChartData: [],
                 fallenIndicatorsData: [],
                 dateFormat: 'YYYY-MM-DD',
                 selectedStartDate: null,
@@ -90,8 +81,7 @@
                 indicatorsChartSelectedStartDate: null,
                 indicatorsChartSelectedEndDate: null,
                 auditsIndicators,
-                defaultSelectedIndicators,
-                selectedAuditIndicators: defaultSelectedIndicators,
+                selectedAuditIndicators: [],
                 indicatorsChartData: {}
             }
         },
@@ -110,24 +100,6 @@
                 this.indicatorsChartSelectedStartDate = dateString[0];
                 this.indicatorsChartSelectedEndDate = dateString[1];
                 this.getDataForSelectedIndicatorsChart();
-            },
-            getMainChartData() {
-                this.$http.get('/test/get_all_indicators_by_url_name', {
-                    params: {
-                        token: this.$store.getters.userData.token,
-                        url: this.urlName
-                    }
-                })
-                    .then((res) => {
-                        this.mainChartData = res.data;
-                    })
-                    .catch((error) => {
-                        if (error.response) {
-                            this.$message.error(error.response.data, 10);
-                        } else {
-                            // console.log(error);
-                        }
-                    })
             },
             getDataForFallenIndicatorsChart() {
                 this.$http.get('/test/get_fallen_indicators_for_chart_bar_in_url_page', {
@@ -156,13 +128,18 @@
                         url: this.urlName,
                         startDate: this.indicatorsChartSelectedStartDate,
                         endDate: date.format(date.addDays(new Date(this.indicatorsChartSelectedEndDate), 1), this.dateFormat),
-                        indicators: this.selectedAuditIndicators.toString(),
+                        indicators: this.selectedAuditIndicators.length !== 0 ? this.selectedAuditIndicators.toString() + ',' : '',
                     }
                 })
                     .then((res) => {
                         for (let k in res.data) {
                             res.data[k].forEach(item => {
                                 item['date'] = date.format(new Date(item['date']), 'DD MMM');
+                                if (item.name === 'performance') {
+                                    item.size = 0.5
+                                } else {
+                                    item.size = 2
+                                }
                             });
                         }
                         this.indicatorsChartData = res.data;
@@ -190,7 +167,6 @@
         beforeMount() {
             this.selectedStartDate = this.indicatorsChartSelectedStartDate = this.getLastWeekDay;
             this.selectedEndDate = this.indicatorsChartSelectedEndDate = this.getToday;
-            this.getMainChartData();
             this.getDataForFallenIndicatorsChart();
             this.getDataForSelectedIndicatorsChart();
         },
@@ -206,36 +182,49 @@
     }
 
     .fallen-indicators-chart {
-        .title-block {
-            width: 100%;
-            display: flex;
+        .block-title {
+            position: absolute;
+            z-index: 1;
 
-            .title {
-                font: 16px/30px 'Open Sans', sans-serif;
-                color: #48465b;
-                margin-right: 10px;
-            }
+            .title-block {
+                display: flex;
 
-            .space {
-                flex-grow: 1;
-            }
+                .title {
+                    font: 16px/30px 'Open Sans', sans-serif;
+                    color: #48465b;
+                    margin-right: 10px;
+                }
 
-            .date-picker {
-                display: block;
+                .date-picker {
+                    display: block;
 
-                .ant-calendar-picker-input {
-                    border: none;
-                    background: rgb(228, 240, 254);
+                    .ant-calendar-picker-input {
+                        border: none;
+                        background: rgb(228, 240, 254);
 
-                    .ant-calendar-range-picker-separator, .ant-calendar-picker-icon,
-                    .ant-calendar-range-picker-input::-webkit-input-placeholder {
-                        color: rgba(61, 148, 251, 0.8);
+                        .ant-calendar-range-picker-separator, .ant-calendar-picker-icon,
+                        .ant-calendar-range-picker-input::-webkit-input-placeholder {
+                            color: rgba(61, 148, 251, 0.8);
+                        }
+                    }
+
+                    .ant-select-focused .ant-select-selection, .ant-select-selection:focus, .ant-select-selection:active {
+                        box-shadow: none;
                     }
                 }
+            }
+        }
 
-                .ant-select-focused .ant-select-selection, .ant-select-selection:focus, .ant-select-selection:active {
-                    box-shadow: none;
-                }
+        .ant-tabs-bar {
+            margin-top: 28px;
+
+            .ant-tabs-nav-scroll {
+                display: flex;
+                flex-direction: row-reverse;
+            }
+
+            .ant-tabs-tab {
+                padding: 2px 16px 22px;
             }
         }
     }

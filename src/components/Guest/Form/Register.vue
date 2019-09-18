@@ -89,7 +89,7 @@
 	];
 
 	export default {
-		name: "Rerister",
+		name: "Register",
 		data() {
 			return {
 				form: this.$form.createForm(this),
@@ -105,14 +105,13 @@
 				this.form.validateFieldsAndScroll((err, values) => {
 					if (!err) {
 						const name = values.name;
-						const fullName = values.fullName;
+						// const fullName = values.fullName;
 						const email = values.email;
 						const pass = values.pass;
-						console.log(values);
 						this.$http.post('/user/register', null, {
 							params: {email, pass, name}
 						})
-						.then((res) => {
+						.then(() => {
 							this.$message.success('Вы успешно зарегистрированы');
 						}).catch((error) => {
 							if (error.response) {
