@@ -118,10 +118,10 @@
                 this.getDataForChart();
             },
             getUrlsList() {
-                this.$http.get('/test/get_urls_list_by_domain', {
+                this.$http.get('/domain/get_urls_list_with_performance', {
                     params: {
                         token: this.$store.getters.userData.token,
-                        domainName: this.domainName
+                        domain: this.domainName
                     }
                 })
                     .then((res) => {
@@ -140,7 +140,7 @@
                     });
             },
             getDataForChart() {
-                this.$http.get('/test/get_performance_data_by_url_name_and_date', {
+                this.$http.get('/test_data_getters/get_performance_data_by_url_and_date', {
                     params: {
                         token: this.$store.getters.userData.token,
                         startDate: this.selectedStartDate,
@@ -184,14 +184,14 @@
                     })
             },
             getUserSubscribedInfo() {
-                this.$http.get('/user/get_subscribed_domains', {
+                this.$http.get('/user/get_user_subscriptions', {
                     params: {
                         token: this.$store.getters.userData.token
                     }
                 }).then((res) => {
                     this.userSubscribedToDomain = false;
                     res.data.forEach(domainItem => {
-                        if (domainItem.name === this.domainName) {
+                        if (domainItem.domain === this.domainName) {
                             this.userSubscribedToDomain = true;
                         }
                     })

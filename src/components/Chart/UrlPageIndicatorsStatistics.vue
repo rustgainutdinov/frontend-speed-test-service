@@ -3,8 +3,8 @@
         <v-chart :forceFit="true" :height="height" :data="data" :scale="scale" :padding="padding">
             <v-tooltip/>
             <v-axis/>
-            <v-smooth-line position="date*value" :size="lineSize" color="name"/>
-            <v-point position="date*value" color="name" :size="pointSize" :v-style="style" :shape="'circle'"/>
+            <v-smooth-line position="date*value" :size="lineSize" color="indicator"/>
+            <v-point position="date*value" color="indicator" :size="pointSize" :v-style="style" :shape="'circle'"/>
             <v-legend/>
             <!--<v-area position="year*value" color="page"/>-->
         </v-chart>

@@ -102,9 +102,8 @@
                 this.getDataForSelectedIndicatorsChart();
             },
             getDataForFallenIndicatorsChart() {
-                this.$http.get('/test/get_fallen_indicators_for_chart_bar_in_url_page', {
+                this.$http.get('/url/get_fallen_indicators', {
                     params: {
-                        token: this.$store.getters.userData.token,
                         url: this.urlName,
                         startDate: this.selectedStartDate,
                         endDate: date.format(date.addDays(new Date(this.selectedEndDate), 1), this.dateFormat),
@@ -122,20 +121,20 @@
                     })
             },
             getDataForSelectedIndicatorsChart() {
-                this.$http.get('/test/get_selected_indicators_by_url_and_date', {
+                this.$http.get('/url/get_selected_indicators_by_date', {
                     params: {
                         token: this.$store.getters.userData.token,
                         url: this.urlName,
                         startDate: this.indicatorsChartSelectedStartDate,
                         endDate: date.format(date.addDays(new Date(this.indicatorsChartSelectedEndDate), 1), this.dateFormat),
-                        indicators: this.selectedAuditIndicators.length !== 0 ? this.selectedAuditIndicators.toString() + ',' : '',
+                        indicators: JSON.stringify(this.selectedAuditIndicators.length !== 0 ? this.selectedAuditIndicators : ['']),
                     }
                 })
                     .then((res) => {
                         for (let k in res.data) {
                             res.data[k].forEach(item => {
                                 item['date'] = date.format(new Date(item['date']), 'DD MMM');
-                                if (item.name === 'performance') {
+                                if (item.indicator === 'performance') {
                                     item.size = 0.5
                                 } else {
                                     item.size = 2

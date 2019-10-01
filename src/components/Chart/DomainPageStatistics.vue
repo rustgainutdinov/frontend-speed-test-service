@@ -3,8 +3,8 @@
     <v-chart :forceFit="true" :height="height" :data="chartData" :scale="scale" :padding="padding">
       <v-tooltip/>
       <v-axis/>
-      <v-smooth-line position="date*performance" :size="2" color="url"/>
-      <v-point position="date*performance" color="url" :size="4" :v-style="style" :shape="'circle'"/>
+      <v-smooth-line position="date*value" :size="2" color="url"/>
+      <v-point position="date*value" color="url" :size="4" :v-style="style" :shape="'circle'"/>
       <v-legend/>
       <!--<v-area position="year*value" color="page"/>-->
     </v-chart>
@@ -17,7 +17,7 @@
 	const scale = [{
 		dataKey: 'date'
 	}, {
-		dataKey: 'performance',
+		dataKey: 'value',
 	}];
 	export default {
 		name: "DomainPageStatistics",
