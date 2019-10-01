@@ -110,14 +110,6 @@ export default new Router({
                         },
                     ]
                 },
-                // {
-                //     path: 'url',
-                //     name: 'Url',
-                //     component: Url,
-                //     meta: {
-                //         breadcrumb: 'Главная'
-                //     }
-                // },
             ],
             beforeEnter(to, from, next) {
                 let priority = getPriority();

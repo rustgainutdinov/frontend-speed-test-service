@@ -5,6 +5,9 @@
                 <div slot="title" class="title-block">
                     <div class="title">Список доменов</div>
                     <div class="space"></div>
+                    <a-button icon="sync" class="test-all-urls-btn" @click="showUrlsTreeToTestModal">Запустить
+                        тестирование
+                    </a-button>
                     <a-button type="primary" icon="plus" @click="showDomainModalWindow">Добавить домен</a-button>
                 </div>
                 <div slot="content">
@@ -103,6 +106,21 @@
                             </a-form-item>
                         </a-form>
                     </a-modal>
+                    <a-modal
+                            title="Протестировать страницы"
+                            :visible="testUrlsListModalVisible"
+                            @ok="testUrlsList"
+                            @cancel="hideUrlsTreeToTestModal"
+                            okText="Протестировать"
+                            cancelText="Отмена"
+                            width="720px">
+                        <a-tree
+                                checkable
+                                v-model="selectedUrlsToTest"
+                                :treeData="urlsTreeData"
+                                :autoExpandParent="true"
+                        />
+                    </a-modal>
                 </div>
             </DefaultBlock>
         </a-col>
@@ -165,7 +183,11 @@
                 DomainFormTailLayout,
                 domainForm: this.$form.createForm(this),
                 urlForm: this.$form.createForm(this),
-                urlFormDomainName: ''
+                urlFormDomainName: '',
+                testUrlsListModalVisible: false,
+                urlsTreeData: [],
+                selectedUrlsToTest: [],
+                allUrlsList: []
             }
         },
         components: {
@@ -184,7 +206,7 @@
                 });
             },
             deleteDomain(domain) {
-                this.$http.post('/domain/delete', null, {
+                this.$http.post('/domain/remove', null, {
                     params: {
                         token: this.$store.getters.userData.token, domain
                     }
@@ -214,7 +236,7 @@
                 });
             },
             deleteUrl(url) {
-                this.$http.post('/domain/delete_url', null, {
+                this.$http.post('/url/remove', null, {
                     params: {
                         token: this.$store.getters.userData.token, url
                     }
@@ -233,7 +255,7 @@
                     })
             },
             onDomainFavouriteChange(checked, domain) {
-                this.$http.post('/domain/change_domain_is_favourite_row', null, {
+                this.$http.post('/domain/change_is_favourite_field', null, {
                     params: {
                         token: this.$store.getters.userData.token,
                         domain, isFavourite: checked.target.checked
@@ -252,7 +274,7 @@
                     })
             },
             onUrlFavouriteChange(checked, url) {
-                this.$http.post('/domain/change_url_is_favourite_row', null, {
+                this.$http.post('/url/change_is_favourite_field', null, {
                     params: {
                         token: this.$store.getters.userData.token,
                         url, isFavourite: checked.target.checked
@@ -296,11 +318,11 @@
                     }
                 });
             },
-            addNewUrlPostRequest(url, isFavourite, domain, onSuccess, onError) {
-                this.$http.post('/domain/add_new_url', null, {
+            addNewUrlPostRequest(urlName, isFavourite, domainName, onSuccess, onError) {
+                this.$http.post('/url/create', null, {
                     params: {
                         token: this.$store.getters.userData.token,
-                        domain, isFavourite, url
+                        domainName, isFavourite, urlName
                     }
                 })
                     .then(() => {
@@ -335,11 +357,11 @@
                     }
                 });
             },
-            addNewDomainPostRequest(domainName, isFavourite, onSuccess, onError) {
-                this.$http.post('/domain/add', null, {
+            addNewDomainPostRequest(domain, isFavourite, onSuccess, onError) {
+                this.$http.post('/domain/create', null, {
                     params: {
                         token: this.$store.getters.userData.token,
-                        domainName, isFavourite
+                        domain, isFavourite
                     }
                 })
                     .then(() => {
@@ -362,19 +384,67 @@
                 this.addNewUrlModalVisible = false
             },
             getDomainsList() {
-                this.$http.get('/domain/get_domains_list_for_admin_panel', {
+                this.$http.get('/pages/get_info_about_urls_and_domain_for_admin_panel', {
                     params: {
                         token: this.$store.getters.userData.token
                     }
                 })
                     .then((res) => {
                         this.data = res.data;
+                        this.updateUrlsToTestTree(res.data);
                     })
                     .catch((error) => {
                         if (error.response) {
                             this.$message.error(error.response.data, 10);
                         } else {
                             // console.log(error);
+                        }
+                    })
+            },
+            showUrlsTreeToTestModal() {
+                this.testUrlsListModalVisible = true;
+            },
+            updateUrlsToTestTree(pagesData) {
+                this.allUrlsList = [];
+                this.urlsTreeData = [];
+                pagesData.forEach(domainData => {
+                    const treeItem = {
+                        title: domainData.domain,
+                        key: domainData.domain,
+                        children: []
+                    };
+                    domainData.urlsList.forEach(urlItem => {
+                        this.allUrlsList.push(urlItem.url);
+                        treeItem.children.push({
+                            title: urlItem.url,
+                            key: urlItem.url
+                        })
+                    });
+                    this.urlsTreeData.push(treeItem);
+                });
+            },
+            hideUrlsTreeToTestModal() {
+                this.testUrlsListModalVisible = false;
+            },
+            testUrlsList() {
+                let onlyUrlsNamesList = [];
+                this.selectedUrlsToTest.forEach(url => {
+                    if (this.allUrlsList.indexOf(url) !== -1) {
+                        onlyUrlsNamesList.push({name: url});
+                    }
+                });
+                this.$http.post('/testing_server/test_urls_list', null, {
+                    params: {
+                        token: this.$store.getters.userData.token,
+                        list_of_urls: JSON.stringify(onlyUrlsNamesList)
+                    }
+                })
+                    .then(() => {
+                        this.$message.success('Тестирование успешно запущено', 10);
+                    })
+                    .catch((error) => {
+                        if (error.response) {
+                            this.$message.error(error.response.data, 10);
                         }
                     })
             }
@@ -399,6 +469,10 @@
                 flex-grow: 1;
             }
         }
+    }
+
+    .test-all-urls-btn {
+        margin-right: 20px;
     }
 
     .modal-window .ant-modal-body {
