@@ -10,7 +10,7 @@ import VueBreadcrumbs from 'vue-2-breadcrumbs'
 
 
 const base = axios.create({
-	baseURL: process.env.NODE_ENV === 'production' ? 'http://10.10.31.201:8001/' : 'http://localhost:8001/'
+	baseURL: process.env.NODE_ENV === 'production' ? 'http://10.10.31.201:8001/' : 'http://localhost:8001'
 });
 
 Vue.prototype.$http = base;
