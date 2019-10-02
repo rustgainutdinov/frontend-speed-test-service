@@ -17,12 +17,9 @@
                                 @blur="handleBlur"
                                 :filterOption="filterOption"
                         >
-                            <a-select-option value="ispring"><router-link to="ispringsolutions.com">ispring.ru</router-link></a-select-option>
-                            <a-select-option value="moneta">moneta.ru</a-select-option>
-                            <a-select-option value="travelline">travelline.ru</a-select-option>
-                            <a-select-option value="library">library.ispring.ru</a-select-option>
-                            <a-select-option value="payfod">payfood.ispring.ru</a-select-option>
-                            <a-select-option value="portal">portal.ispring.ru</a-select-option>
+                            <a-select-option v-for="domain in domainsList" :key="domain">
+                                <router-link :to="'/user/' + domain">{{domain}}</router-link>
+                            </a-select-option>
                         </a-select>
                     </div>
                     <div class="space">
@@ -73,7 +70,8 @@
         data() {
             return {
                 isSelectActive: false,
-                breadcrumbs: []
+                breadcrumbs: [],
+                domainsList: []
             }
         },
         methods: {
@@ -104,9 +102,30 @@
 
                     this.breadcrumbs.push(breadcrumb);
                 });
+            },
+            async getDomainsList() {
+                await this.$http.get('/domain/get_full_info_about_all_domains', {
+                    params: {
+                        token: this.$store.getters.userData.token,
+                    }
+                })
+                    .then((res) => {
+                        this.domainsList = [];
+                        res.data.forEach(item => {
+                            this.domainsList.push(item.domain);
+                        });
+                    })
+                    .catch((error) => {
+                        if (error.response) {
+                            this.$message.error(error.response.data, 10);
+                        } else {
+                            // console.log(error);
+                        }
+                    })
             }
         },
-        beforeMount() {
+        async beforeMount() {
+            await this.getDomainsList();
             this.changeBreadCrumbsList()
         },
         watch: {

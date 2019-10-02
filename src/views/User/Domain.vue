@@ -140,6 +140,8 @@
                     });
             },
             getDataForChart() {
+                this.mobileChartData = [];
+                this.desktopChartData = [];
                 this.$http.get('/test_data_getters/get_performance_data_by_url_and_date', {
                     params: {
                         token: this.$store.getters.userData.token,
@@ -196,9 +198,18 @@
                         }
                     })
                 });
+            },
+            init() {
+                this.selectedStartDate = this.getLastWeekDay;
+                this.selectedEndDate = this.getToday;
+                this.getUrlsList();
+                this.getUserSubscribedInfo();
             }
         },
         computed: {
+            fullPath() {
+                return this.$route.fullPath
+            },
             getToday() {
                 return date.format(new Date(), this.dateFormat);
             },
@@ -210,10 +221,14 @@
             }
         },
         beforeMount() {
-            this.selectedStartDate = this.getLastWeekDay;
-            this.selectedEndDate = this.getToday;
-            this.getUrlsList();
-            this.getUserSubscribedInfo();
+            this.init()
+        },
+        watch: {
+            fullPath() {
+                this.mobileChartData = [];
+                this.desktopChartData = [];
+                this.init()
+            }
         }
     }
 </script>
