@@ -1,7 +1,7 @@
 <template>
     <a-row :gutter="20">
         <a-col :span="12"
-               v-for="(data, domain) in statisticsData">
+               v-for="(data, domain) in statisticsData" :key="domain">
             <DefaultBlock>
                 <div slot="content" class="domain-statistics">
                     <div class="block-title">
@@ -50,7 +50,6 @@
                         });
                     }
                 }
-                console.log(res.data);
                 this.statisticsData = res.data;
             }).catch((error) => {
                 if (error.response) {

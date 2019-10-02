@@ -17,7 +17,7 @@
                                 @blur="handleBlur"
                                 :filterOption="filterOption"
                         >
-                            <a-select-option value="ispring">ispring.ru</a-select-option>
+                            <a-select-option value="ispring"><router-link to="ispringsolutions.com">ispring.ru</router-link></a-select-option>
                             <a-select-option value="moneta">moneta.ru</a-select-option>
                             <a-select-option value="travelline">travelline.ru</a-select-option>
                             <a-select-option value="library">library.ispring.ru</a-select-option>
@@ -54,7 +54,7 @@
                     <!--<a-icon type="home"/>-->
                     <!--<span> Главная</span>-->
                     <!--</a-breadcrumb-item>-->
-                    <a-breadcrumb-item v-for="breadcrumb in breadcrumbs">
+                    <a-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb">
                         <router-link :to="breadcrumb.path">{{breadcrumb.name}}</router-link>
                     </a-breadcrumb-item>
                 </a-breadcrumb>
