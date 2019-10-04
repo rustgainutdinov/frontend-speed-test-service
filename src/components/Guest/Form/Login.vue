@@ -32,13 +32,13 @@
         </a-form-item>
         <a-button type="primary" size="large" block class="submit-form" html-type="submit">Войти</a-button>
         <div class="other-from-links">
-          <router-link to="/guest/register">Ещё не зарегистрированы?</router-link>
+            <router-link to="/guest/register">Ещё не зарегистрированы?</router-link>
         </div>
     </a-form>
 </template>
 
 <script>
-    import Cookie from 'js-cookie';
+    import setUserData from "../../../methods/setUserData";
 
     const emailConfig = [
         'email',
@@ -80,14 +80,10 @@
                             params: {email, pass}
                         }).then((res) => {
                             this.$message.success('Вы успешно авторизированы');
-                            const userData = {email, token: res.data.token, priority: res.data.rights};
-                            this.$store.dispatch('setUserData', userData);
-                            Cookie.set('token', res.data.token);
-                            Cookie.set('priority', res.data.rights);
+                            setUserData(this, res.data.token, res.data.rights, email);
                             setTimeout(() => {
                                 this.$router.push({path: '/user'});
-                            }, 2000)
-                            // console.log(this.$store.getters.userData);
+                            }, 1000)
                         }).catch((error) => {
                             if (error.response) {
                                 this.$message.error(error.response.data, 10);

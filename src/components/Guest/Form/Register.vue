@@ -49,6 +49,8 @@
 </template>
 
 <script>
+    import setUserData from "../../../methods/setUserData";
+
     const nameConfig = [
         'name',
         {
@@ -105,14 +107,17 @@
                 this.form.validateFieldsAndScroll((err, values) => {
                     if (!err) {
                         const name = values.name;
-                        // const fullName = values.fullName;
                         const email = values.email;
                         const pass = values.pass;
                         this.$http.post('/user/create', null, {
                             params: {email, pass, name}
                         })
-                            .then(() => {
+                            .then((res) => {
                                 this.$message.success('Вы успешно зарегистрированы');
+                                setUserData(this, res.data.token, res.data.rights, email);
+                                setTimeout(() => {
+                                    this.$router.push({path: '/user'});
+                                }, 1000);
                             }).catch((error) => {
                             if (error.response) {
                                 this.$message.error(error.response.data, 10);

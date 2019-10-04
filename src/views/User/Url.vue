@@ -4,7 +4,10 @@
             <DefaultBlock title class="indicators-statistics-chart">
                 <div slot="title">
                     <div class="text-block">
-                        <div class="title">Список показателей</div>
+                        <div class="title">{{urlName}}</div>
+                        <a-button icon="sync" class="test-all-urls-btn" @click="testUrl">
+                            Запустить тестирование
+                        </a-button>
                         <div class="space"></div>
                         <a-range-picker class="date-picker"
                                         :format="dateFormat"
@@ -62,6 +65,7 @@
     import FallenIndicatorsTable from '@/components/Chart/UrlPageFallenIndicatorsTable';
     import IndicatorsChart from '@/components/Chart/UrlPageIndicatorsStatistics';
     import auditsIndicators from "../../config/auditsIndicators";
+    import errorHandler from "../../methods/errorHandler";
 
 
     export default {
@@ -108,17 +112,11 @@
                         startDate: this.selectedStartDate,
                         endDate: date.format(date.addDays(new Date(this.selectedEndDate), 1), this.dateFormat),
                     }
+                }).then((res) => {
+                    this.fallenIndicatorsData = res.data;
+                }).catch((error) => {
+                    errorHandler(this, error)
                 })
-                    .then((res) => {
-                        this.fallenIndicatorsData = res.data;
-                    })
-                    .catch((error) => {
-                        if (error.response) {
-                            this.$message.error(error.response.data, 10);
-                        } else {
-                            // console.log(error);
-                        }
-                    })
             },
             getDataForSelectedIndicatorsChart() {
                 this.$http.get('/url/get_selected_indicators_by_date', {
@@ -129,27 +127,28 @@
                         endDate: date.format(date.addDays(new Date(this.indicatorsChartSelectedEndDate), 1), this.dateFormat),
                         indicators: JSON.stringify(this.selectedAuditIndicators.length !== 0 ? this.selectedAuditIndicators : ['']),
                     }
+                }).then((res) => {
+                    for (let k in res.data) {
+                        res.data[k].forEach(item => {
+                            item['date'] = date.format(new Date(item['date']), 'DD MMM');
+                        });
+                    }
+                    this.indicatorsChartData = res.data;
+                }).catch((error) => {
+                    errorHandler(this, error)
                 })
-                    .then((res) => {
-                        for (let k in res.data) {
-                            res.data[k].forEach(item => {
-                                item['date'] = date.format(new Date(item['date']), 'DD MMM');
-                                if (item.indicator === 'performance') {
-                                    item.size = 0.5
-                                } else {
-                                    item.size = 2
-                                }
-                            });
-                        }
-                        this.indicatorsChartData = res.data;
-                    })
-                    .catch((error) => {
-                        if (error.response) {
-                            this.$message.error(error.response.data, 10);
-                        } else {
-                            // console.log(error);
-                        }
-                    })
+            },
+            testUrl() {
+                this.$http.post('/testing_server/test_urls_list', null, {
+                    params: {
+                        token: this.$store.getters.userData.token,
+                        list_of_urls: JSON.stringify([{name: this.urlName}])
+                    }
+                }).then(() => {
+                    this.$message.success('Тестирование успешно запущено', 10);
+                }).catch((error) => {
+                    errorHandler(this, error)
+                })
             }
         },
         computed: {
@@ -205,6 +204,10 @@
                         .ant-calendar-range-picker-input::-webkit-input-placeholder {
                             color: rgba(61, 148, 251, 0.8);
                         }
+                    }
+
+                    .ant-calendar-picker-clear {
+                        display: none;
                     }
 
                     .ant-select-focused .ant-select-selection, .ant-select-selection:focus, .ant-select-selection:active {
@@ -263,6 +266,10 @@
 
                     .ant-select-focused .ant-select-selection, .ant-select-selection:focus, .ant-select-selection:active {
                         box-shadow: none;
+                    }
+
+                    .ant-calendar-picker-clear {
+                        display: none;
                     }
                 }
             }

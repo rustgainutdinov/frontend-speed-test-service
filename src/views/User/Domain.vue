@@ -271,6 +271,10 @@
                 .ant-select-focused .ant-select-selection, .ant-select-selection:focus, .ant-select-selection:active {
                     box-shadow: none;
                 }
+
+                .ant-calendar-picker-clear {
+                    display: none;
+                }
             }
 
             .domain-subscribed-checkbox {

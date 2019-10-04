@@ -9,16 +9,15 @@
                     </router-link>
                     <div class="domains-list" :class="{active: isSelectActive}">
                         <a-select
-                                showSearch
                                 placeholder="Выберите домен"
                                 optionFilterProp="children"
                                 style="width: 200px"
                                 @focus="handleFocus"
-                                @blur="handleBlur"
-                                :filterOption="filterOption"
-                        >
+                                @blur="handleBlur">
                             <a-select-option v-for="domain in domainsList" :key="domain">
-                                <router-link :to="'/user/' + domain">{{domain}}</router-link>
+                                <router-link :to="'/user/' + domain" tag="div" style="width: 100%; color: #1890ff;">
+                                    {{domain}}
+                                </router-link>
                             </a-select-option>
                         </a-select>
                     </div>
@@ -26,17 +25,12 @@
                     </div>
                     <div class="menu">
                         <ul>
-                            <!--                            <li>-->
-                            <!--                                <a-badge count="5">-->
-                            <!--                                    <a-icon type="bell"/>-->
-                            <!--                                </a-badge>-->
-                            <!--                            </li>-->
                             <li v-if="getPriority() >= 200">
                                 <router-link :to="{path: '/user/admin-panel'}">
                                     <a-icon type="user"/>
                                 </router-link>
                             </li>
-                            <li>
+                            <li @click="logout">
                                 <router-link :to="{path: '/guest'}">
                                     <a-icon type="logout"/>
                                 </router-link>
@@ -47,10 +41,6 @@
             </div>
             <div class="subheader">
                 <a-breadcrumb>
-                    <!--<a-breadcrumb-item href="">-->
-                    <!--<a-icon type="home"/>-->
-                    <!--<span> Главная</span>-->
-                    <!--</a-breadcrumb-item>-->
                     <a-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb">
                         <router-link :to="breadcrumb.path">{{breadcrumb.name}}</router-link>
                     </a-breadcrumb-item>
@@ -64,6 +54,7 @@
 
 <script>
     import getPriority from "../middleware/getPriority";
+    import clearUserData from "../methods/clearUserData";
 
     export default {
         name: "Base",
@@ -71,19 +62,20 @@
             return {
                 isSelectActive: false,
                 breadcrumbs: [],
-                domainsList: []
+                domainsList: [],
             }
         },
         methods: {
             getPriority,
+            clearUserData,
+            logout() {
+                clearUserData(this);
+            },
             handleBlur() {
                 this.isSelectActive = false;
             },
             handleFocus() {
                 this.isSelectActive = true;
-            },
-            filterOption(input, option) {
-                return option.componentOptions.children[0].text.toLowerCase().indexOf(input.toLowerCase()) >= 0
             },
             changeBreadCrumbsList() {
                 this.breadcrumbs = [];

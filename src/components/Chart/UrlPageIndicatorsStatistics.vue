@@ -29,14 +29,14 @@
                 height: 500,
                 padding,
                 style: {stroke: '#fff', lineWidth: 1},
-                lineSize: ['name', function (name) {
-                    if (name === 'performance') {
+                lineSize: ['indicator', function (indicator) {
+                    if (indicator === 'performance') {
                         return 5;
                     }
                     return 2;
                 }],
-                pointSize: ['name', function (name) {
-                    if (name === 'performance') {
+                pointSize: ['indicator', function (indicator) {
+                    if (indicator === 'performance') {
                         return 6;
                     }
                     return 4;

@@ -5,8 +5,8 @@
                 <div slot="title" class="title-block">
                     <div class="title">Список доменов</div>
                     <div class="space"></div>
-                    <a-button icon="sync" class="test-all-urls-btn" @click="showUrlsTreeToTestModal">Запустить
-                        тестирование
+                    <a-button icon="sync" class="test-all-urls-btn" @click="showUrlsTreeToTestModal">
+                        Запустить тестирование
                     </a-button>
                     <a-button type="primary" icon="plus" @click="showDomainModalWindow">Добавить домен</a-button>
                 </div>
@@ -84,11 +84,11 @@
                             class="modal-window"
                             okText="Добавить"
                             cancelText="Отмена"
-                            width="720px">
+                            width="1000px">
                         <a-form :form="urlForm">
                             <a-form-item
-                                    :label-col="DomainFormItemLayout.labelCol"
-                                    :wrapper-col="DomainFormItemLayout.wrapperCol"
+                                    :label-col="UrlFormItemLayout.labelCol"
+                                    :wrapper-col="UrlFormItemLayout.wrapperCol"
                                     label="Url">
                                 <a-input
                                         v-decorator="['url',{
@@ -97,8 +97,8 @@
                                         placeholder="Введите url"/>
                             </a-form-item>
                             <a-form-item
-                                    :label-col="DomainFormTailLayout.labelCol"
-                                    :wrapper-col="DomainFormTailLayout.wrapperCol">
+                                    :label-col="UrlFormTailLayout.labelCol"
+                                    :wrapper-col="UrlFormTailLayout.wrapperCol">
                                 <a-checkbox
                                         v-decorator="['isFavourite', {valuePropName: 'checked', initialValue: false}]">
                                     Отображать на главной
@@ -113,7 +113,7 @@
                             @cancel="hideUrlsTreeToTestModal"
                             okText="Протестировать"
                             cancelText="Отмена"
-                            width="720px">
+                            width="1200px">
                         <a-tree
                                 checkable
                                 v-model="selectedUrlsToTest"
@@ -129,6 +129,7 @@
 
 <script>
     import DefaultBlock from '@/components/User/Block';
+    import errorHandler from "../../methods/errorHandler";
 
     const DomainFormItemLayout = {
         labelCol: {span: 8},
@@ -137,6 +138,14 @@
     const DomainFormTailLayout = {
         labelCol: {span: 8},
         wrapperCol: {span: 16, offset: 8},
+    };
+    const UrlFormItemLayout = {
+        labelCol: {span: 4},
+        wrapperCol: {span: 20},
+    };
+    const UrlFormTailLayout = {
+        labelCol: {span: 4},
+        wrapperCol: {span: 20, offset: 4},
     };
 
     const columns = [
@@ -181,6 +190,8 @@
                 addNewUrlConfirmLoading: false,
                 DomainFormItemLayout,
                 DomainFormTailLayout,
+                UrlFormItemLayout,
+                UrlFormTailLayout,
                 domainForm: this.$form.createForm(this),
                 urlForm: this.$form.createForm(this),
                 urlFormDomainName: '',
@@ -304,16 +315,12 @@
                 this.addNewUrlConfirmLoading = true;
                 this.urlForm.validateFields((err, values) => {
                     if (!err) {
-                        const closeModal = () => {
+                        this.addNewUrlPostRequest(values.url, values.isFavourite, this.urlFormDomainName, () => {
                             this.addNewUrlModalVisible = false;
                             this.addNewUrlConfirmLoading = false;
-                        };
-                        this.addNewUrlPostRequest(values.url, values.isFavourite, this.urlFormDomainName, () => {
-                            closeModal();
+                            this.urlForm.resetFields();
+                            this.getDomainsList();
                             this.$message.success('Url успешно сохранен', 5);
-                        }, () => {
-                            closeModal();
-                            this.$message.error('Ошибка при добавлении страницы', 5);
                         })
                     }
                 });
@@ -330,12 +337,8 @@
                         onSuccess();
                     })
                     .catch((error) => {
-                        onError();
-                        if (error.response) {
-                            this.$message.error(error.response.data, 5);
-                        } else {
-                            // console.log(error);
-                        }
+                        this.addNewUrlConfirmLoading = false;
+                        errorHandler(this, error)
                     })
             },
             addNewDomain(e) {
@@ -343,39 +346,28 @@
                 this.addNewDomainConfirmLoading = true;
                 this.domainForm.validateFields((err, values) => {
                     if (!err) {
-                        const closeModal = () => {
+                        this.addNewDomainPostRequest(values.domain, values.isFavourite, () => {
+                            this.$message.success('Домен успешно сохранен', 5);
                             this.addNewDomainModalVisible = false;
                             this.addNewDomainConfirmLoading = false;
-                        };
-                        this.addNewDomainPostRequest(values.domain, values.isFavourite, () => {
-                            closeModal();
-                            this.$message.success('Домен успешно сохранен', 5);
-                        }, () => {
-                            closeModal();
-                            this.$message.error('Ошибка при добавлении домена', 5);
+                            this.getDomainsList();
+                            this.domainForm.resetFields();
                         })
                     }
                 });
             },
-            addNewDomainPostRequest(domain, isFavourite, onSuccess, onError) {
+            addNewDomainPostRequest(domain, isFavourite, onSuccess) {
                 this.$http.post('/domain/create', null, {
                     params: {
                         token: this.$store.getters.userData.token,
                         domain, isFavourite
                     }
+                }).then(() => {
+                    onSuccess();
+                }).catch((error) => {
+                    this.addNewDomainConfirmLoading = false;
+                    errorHandler(this, error)
                 })
-                    .then(() => {
-                        this.getDomainsList();
-                        onSuccess();
-                    })
-                    .catch((error) => {
-                        onError();
-                        if (error.response) {
-                            this.$message.error(error.response.data, 5);
-                        } else {
-                            // console.log(error);
-                        }
-                    })
             },
             hideDomainModalWindow() {
                 this.addNewDomainModalVisible = false
@@ -397,7 +389,7 @@
                         if (error.response) {
                             this.$message.error(error.response.data, 10);
                         } else {
-                            // console.log(error);
+                            console.log(error);
                         }
                     })
             },
@@ -413,14 +405,16 @@
                         key: domainData.domain,
                         children: []
                     };
-                    domainData.urlsList.forEach(urlItem => {
-                        this.allUrlsList.push(urlItem.url);
-                        treeItem.children.push({
-                            title: urlItem.url,
-                            key: urlItem.url
-                        })
-                    });
-                    this.urlsTreeData.push(treeItem);
+                    if (domainData.urlsList) {
+                        domainData.urlsList.forEach(urlItem => {
+                            this.allUrlsList.push(urlItem.url);
+                            treeItem.children.push({
+                                title: urlItem.url,
+                                key: urlItem.url
+                            })
+                        });
+                        this.urlsTreeData.push(treeItem);
+                    }
                 });
             },
             hideUrlsTreeToTestModal() {
@@ -438,15 +432,13 @@
                         token: this.$store.getters.userData.token,
                         list_of_urls: JSON.stringify(onlyUrlsNamesList)
                     }
+                }).then(() => {
+                    this.$message.success('Тестирование успешно запущено', 10);
+                }).catch((error) => {
+                    if (error.response) {
+                        this.$message.error(error.response.data, 10);
+                    }
                 })
-                    .then(() => {
-                        this.$message.success('Тестирование успешно запущено', 10);
-                    })
-                    .catch((error) => {
-                        if (error.response) {
-                            this.$message.error(error.response.data, 10);
-                        }
-                    })
             }
         },
         beforeMount() {
