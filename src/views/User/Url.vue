@@ -5,7 +5,7 @@
                 <div slot="title">
                     <div class="text-block">
                         <div class="title">{{urlName}}</div>
-                        <a-button icon="sync" class="test-all-urls-btn" @click="testUrl">
+                        <a-button icon="sync" class="test-all-urls-btn" @click="testUrl" v-if="getPriority() >= 200">
                             Запустить тестирование
                         </a-button>
                         <div class="space"></div>
@@ -66,7 +66,7 @@
     import IndicatorsChart from '@/components/Chart/UrlPageIndicatorsStatistics';
     import auditsIndicators from "../../config/auditsIndicators";
     import errorHandler from "../../methods/errorHandler";
-
+    import getPriority from "../../middleware/getPriority";
 
     export default {
         name: "Url",
@@ -91,6 +91,7 @@
         },
         methods: {
             moment,
+            getPriority,
             handleIndicatorsListChange(selectedItems) {
                 this.selectedAuditIndicators = selectedItems;
                 this.getDataForSelectedIndicatorsChart();
@@ -301,5 +302,9 @@
                 padding: 2px 16px 22px;
             }
         }
+    }
+
+    .sortable-chosen {
+        background: #e4f0fe;
     }
 </style>

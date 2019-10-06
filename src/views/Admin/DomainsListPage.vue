@@ -5,6 +5,9 @@
                 <div slot="title" class="title-block">
                     <div class="title">Список доменов</div>
                     <div class="space"></div>
+                    <a-button icon="menu-unfold" class="test-all-urls-btn" @click="domainsQueueModalVisible = true">
+                        Изменить очередность доменов
+                    </a-button>
                     <a-button icon="sync" class="test-all-urls-btn" @click="showUrlsTreeToTestModal">
                         Запустить тестирование
                     </a-button>
@@ -121,6 +124,22 @@
                                 :autoExpandParent="true"
                         />
                     </a-modal>
+                    <a-modal
+                            title="Изменение очередности отображения"
+                            :visible="domainsQueueModalVisible"
+                            @ok="changeDomainsQueue"
+                            @cancel="hideDomainsQueueModal"
+                            okText="Изменить"
+                            cancelText="Отмена"
+                            width="720px">
+                        <draggable v-model="allDomainsList">
+                            <transition-group>
+                                <div v-for="element in allDomainsList" :key="element" class="drag-and-drop-list-item">
+                                    {{element}}
+                                </div>
+                            </transition-group>
+                        </draggable>
+                    </a-modal>
                 </div>
             </DefaultBlock>
         </a-col>
@@ -130,6 +149,7 @@
 <script>
     import DefaultBlock from '@/components/User/Block';
     import errorHandler from "../../methods/errorHandler";
+    import draggable from 'vuedraggable'
 
     const DomainFormItemLayout = {
         labelCol: {span: 8},
@@ -198,11 +218,14 @@
                 testUrlsListModalVisible: false,
                 urlsTreeData: [],
                 selectedUrlsToTest: [],
-                allUrlsList: []
+                allUrlsList: [],
+                allDomainsList: [],
+                domainsQueueModalVisible: false
             }
         },
         components: {
-            DefaultBlock
+            DefaultBlock,
+            draggable
         },
         methods: {
             showDeleteDomainConfirm(domain) {
@@ -325,7 +348,7 @@
                     }
                 });
             },
-            addNewUrlPostRequest(urlName, isFavourite, domainName, onSuccess, onError) {
+            addNewUrlPostRequest(urlName, isFavourite, domainName, onSuccess) {
                 this.$http.post('/url/create', null, {
                     params: {
                         token: this.$store.getters.userData.token,
@@ -398,6 +421,7 @@
             },
             updateUrlsToTestTree(pagesData) {
                 this.allUrlsList = [];
+                this.allDomainsList = [];
                 this.urlsTreeData = [];
                 pagesData.forEach(domainData => {
                     const treeItem = {
@@ -405,6 +429,7 @@
                         key: domainData.domain,
                         children: []
                     };
+                    this.allDomainsList.push(domainData.domain);
                     if (domainData.urlsList) {
                         domainData.urlsList.forEach(urlItem => {
                             this.allUrlsList.push(urlItem.url);
@@ -439,6 +464,27 @@
                         this.$message.error(error.response.data, 10);
                     }
                 })
+            },
+            changeDomainsQueue() {
+                this.$http.post('/domain/change_domain_priority', null, {
+                    params: {
+                        token: this.$store.getters.userData.token,
+                        domainsList: JSON.stringify(this.allDomainsList)
+                    }
+                })
+                    .then(() => {
+                        this.domainsQueueModalVisible = false;
+                        this.$message.success('Изменения успешно внесены', 10);
+                        setTimeout(() => {
+                            this.getDomainsList();
+                        }, 1000);
+                    })
+                    .catch((error) => {
+                        errorHandler(this, error)
+                    })
+            },
+            hideDomainsQueueModal() {
+                this.domainsQueueModalVisible = false;
             }
         },
         beforeMount() {
@@ -469,5 +515,22 @@
 
     .modal-window .ant-modal-body {
         padding-bottom: 0;
+    }
+
+    .drag-and-drop-list-item {
+        border: 1px solid #ddd;
+        border-top: none;
+        padding: 10px 15px;
+        font-size: 14px;
+        background: #ffffff;
+    }
+
+    .drag-and-drop-list-item:first-child {
+        border-top: 1px solid #ddd;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .drag-and-drop-list-item:last-child {
+        border-radius: 0 0 4px 4px;
     }
 </style>
